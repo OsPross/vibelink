@@ -4,39 +4,31 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 import React from "react";
+import { themes, ThemeKey } from "@/lib/themes";
 
 interface NeonLinkProps {
   href: string;
   title: string;
-  variant?: "pink" | "cyan";
-  // ZMIANA: Zamiast LucideIcon, przyjmujemy gotowy element Reacta (ReactNode)
-  icon?: React.ReactNode; 
+  icon?: React.ReactNode;
   className?: string;
+  themeName?: ThemeKey;
+  variant?: string;
 }
 
 export const NeonLink = ({
   href,
   title,
-  variant = "pink",
   icon,
   className,
+  themeName = "cyberpunk",
+  variant = "pink",
 }: NeonLinkProps) => {
-  const colors = {
-    pink: {
-      border: "border-neon-pink",
-      glow: "group-hover:shadow-[0_0_20px_#FF00FF]",
-      text: "group-hover:text-neon-pink",
-      bg: "hover:bg-neon-pink/10",
-    },
-    cyan: {
-      border: "border-neon-cyan",
-      glow: "group-hover:shadow-[0_0_20px_#00FFFF]",
-      text: "group-hover:text-neon-cyan",
-      bg: "hover:bg-neon-cyan/10",
-    },
-  };
-
-  const theme = colors[variant];
+  
+  const themeConfig = themes[themeName] || themes.cyberpunk;
+  
+  // Fallback do 'pink' jeśli wariant jest nieznany
+  const variantKey = (variant === 'cyan' ? 'cyan' : 'pink') as keyof typeof themeConfig.variants;
+  const styles = themeConfig.variants[variantKey];
 
   return (
     <motion.a
@@ -45,33 +37,36 @@ export const NeonLink = ({
       rel="noopener noreferrer"
       className={cn(
         "group relative flex w-full items-center justify-between rounded-xl border p-4 transition-all duration-300",
-        "bg-vibe-dark-gray/50 backdrop-blur-sm",
-        theme.border,
-        theme.bg,
-        theme.glow,
+        "backdrop-blur-sm",
+        styles.bg,     
+        styles.border, 
         className
       )}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.02 }} 
       whileTap={{ scale: 0.98 }}
     >
-      <div className="flex items-center gap-4">
-        {/* ZMIANA: Renderujemy ikonę w wrapperze, który narzuca kolor i rozmiar */}
+       {/* Glow effect */}
+       <div className={cn("absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300", styles.glow)} />
+
+      <div className="flex items-center gap-4 relative z-10">
         {icon && (
-          <span className={cn("h-6 w-6 flex items-center justify-center transition-colors duration-300 text-gray-400", theme.text)}>
+          <span className={cn("h-6 w-6 flex items-center justify-center transition-colors duration-300", styles.text)}>
             {icon}
           </span>
         )}
         
-        <span className="font-medium text-white text-lg tracking-wide">
+        {/* POPRAWKA TUTAJ: Usunąłem 'text-white'. 
+            Teraz tekst bierze kolor z 'styles.text', który jest zdefiniowany w themes.ts.
+            Dzięki temu w Minimal Light tekst będzie czarny. */}
+        <span className={cn("font-medium text-lg tracking-wide transition-colors", styles.text)}>
           {title}
         </span>
       </div>
 
       <ExternalLink
         className={cn(
-          "h-5 w-5 opacity-0 transition-all duration-300 -translate-x-2",
-          "group-hover:opacity-100 group-hover:translate-x-0 text-gray-400",
-          theme.text
+          "h-5 w-5 opacity-0 transition-all duration-300 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 relative z-10",
+          styles.text
         )}
       />
     </motion.a>
