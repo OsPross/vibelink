@@ -1,83 +1,175 @@
-import { supabase } from "@/lib/supabase";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createBrowserClient } from "@supabase/ssr";
 import { NeonLink } from "@/components/ui/NeonLink";
 import { ProfileHeader } from "@/components/ui/ProfileHeader";
-import { Github, Youtube, Instagram, Music, Link as LinkIcon, Twitter, Flame } from "lucide-react";
+import { Github, Youtube, Instagram, Music, Link as LinkIcon, Twitter, Flame, Share2, Check } from "lucide-react";
 import { notFound } from "next/navigation";
 import { themes, ThemeKey } from "@/lib/themes";
 import { cn } from "@/lib/utils";
+import { motion, Variants } from "framer-motion"; // <--- POPRAWKA: Dodano import Variants
 
+// --- MAPA IKON ---
 const iconMap: Record<string, any> = {
   Youtube: Youtube, Music: Music, Instagram: Instagram, Github: Github, Twitter: Twitter, default: LinkIcon,
 };
 
-async function getData(username: string) {
-  const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).single();
-  if (!profile) return null;
-  const { data: links } = await supabase.from('links').select('*').eq('user_id', profile.id).order('position', { ascending: true });
-  return { profile, links };
+// --- TYPY ---
+interface LinkItem {
+  id: number; title: string; url: string; icon: string; variant: string;
+}
+interface Profile {
+  username: string; bio: string; avatar_url: string; theme: string;
 }
 
-interface Props { params: Promise<{ username: string }>; }
+// --- ANIMACJE (Variants) ---
+// POPRAWKA: Jawne typowanie : Variants naprawia błąd TypeScripta
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
 
-export default async function UserProfile({ params }: Props) {
-  const { username } = await params;
-  const data = await getData(username);
-  if (!data) return notFound();
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: "spring", stiffness: 100 } 
+  },
+};
 
-  const { profile, links } = data;
+export default function UserProfile({ params }: { params: Promise<{ username: string }> }) {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [links, setLinks] = useState<LinkItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const resolvedParams = await params;
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', resolvedParams.username)
+        .single();
+
+      if (!profileData) {
+        setLoading(false);
+        return;
+      }
+
+      const { data: linksData } = await supabase
+        .from('links')
+        .select('*')
+        .eq('user_id', profileData.id)
+        .order('position', { ascending: true });
+
+      setProfile(profileData);
+      setLinks(linksData || []);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [params]);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (loading) return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"/></div>;
+  if (!profile) return notFound();
+
   const themeKey = (profile.theme as ThemeKey) || 'cyberpunk';
   const theme = themes[themeKey] || themes.cyberpunk;
 
   return (
-    // 1. min-h-screen i flex-col zapewnia, że stopka jest na dole
     <main className={cn(
       "min-h-screen flex flex-col relative transition-colors duration-700 overflow-x-hidden",
       theme.bg, 
       theme.text
     )}>
       
-      {/* Główna treść - flex-grow wypycha stopkę, pb-32 (padding bottom) zabezpiecza przed najechaniem na stopkę */}
-      <div className="w-full max-w-md mx-auto z-10 flex-grow flex flex-col py-16 px-4 pb-32">
-        
-        <ProfileHeader 
-          username={profile.username}
-          bio={profile.bio} 
-          imageUrl={profile.avatar_url}
-        />
+      <div className={cn("fixed inset-0 pointer-events-none opacity-30 transition-all duration-1000", theme.gradient)} />
+      <div className="fixed inset-0 bg-noise opacity-[0.03] pointer-events-none z-0" />
 
-        <div className="flex flex-col gap-4 mt-6">
+      <button 
+        onClick={handleShare}
+        className={cn(
+            "fixed top-6 right-6 z-50 p-3 rounded-full backdrop-blur-md border transition-all duration-300 hover:scale-110",
+            themeKey === 'minimal' ? "bg-black/5 border-black/10 text-black hover:bg-black/10" : "bg-white/10 border-white/10 text-white hover:bg-white/20"
+        )}
+      >
+        {copied ? <Check size={20} /> : <Share2 size={20} />}
+      </button>
+
+      <div className="w-full max-w-md mx-auto z-10 flex-grow flex flex-col py-20 px-6 pb-32">
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+            <ProfileHeader 
+              username={profile.username}
+              bio={profile.bio} 
+              imageUrl={profile.avatar_url}
+            />
+        </motion.div>
+
+        <motion.div 
+          className="flex flex-col gap-4 mt-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {links && links.map((link) => {
             const IconComponent = iconMap[link.icon] || iconMap.default;
             return (
-              <NeonLink 
-                key={link.id}
-                href={link.url} 
-                title={link.title} 
-                icon={<IconComponent />} 
-                themeName={themeKey} 
-                variant={link.variant} 
-              />
+              <motion.div key={link.id} variants={itemVariants}>
+                <NeonLink 
+                  href={link.url} 
+                  title={link.title} 
+                  icon={<IconComponent />} 
+                  themeName={themeKey} 
+                  variant={link.variant} 
+                />
+              </motion.div>
             );
           })}
 
           {!links?.length && (
-            <div className="text-center opacity-50 py-10 border-2 border-dashed border-white/10 rounded-xl">
-               <p>User offline.</p>
-            </div>
+            // POPRAWKA: Usunięto zduplikowane 'opacity-30', zostawiono 'opacity-50'
+            <motion.div variants={itemVariants} className="text-center opacity-50 py-10 border-2 border-dashed border-current rounded-xl">
+               <p>Jeszcze tu pusto...</p>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
 
-      {/* Footer - zawsze na dole, z tłem blur żeby był czytelny */}
       <footer className={cn(
-        "w-full py-6 text-center z-20 backdrop-blur-sm border-t border-white/5 mt-auto relative", 
+        "w-full py-8 text-center z-20 backdrop-blur-md border-t mt-auto relative", 
+        themeKey === 'minimal' ? "border-black/5 bg-white/50" : "border-white/5 bg-black/20",
         theme.footer
       )}>
           <a 
             href="/" 
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.25em] font-bold opacity-70 hover:opacity-100 transition-all hover:tracking-[0.35em]"
+            className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] font-bold opacity-60 hover:opacity-100 transition-all hover:gap-3"
           >
-            <Flame size={12} />
+            <Flame size={10} />
             VibeLink
           </a>
       </footer>

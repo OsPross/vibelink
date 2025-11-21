@@ -1,116 +1,118 @@
 "use client";
 
 import { useState } from "react";
-import { Palette, Check } from "lucide-react";
+import { Palette } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-// Definicja stylów dla podglądu na Landing Page
+// Definicja stylów PODGLĄDU (odzwierciedla nowe motywy)
 const previewThemes = {
-  cyberpunk: {
-    name: "Cyberpunk",
-    iconColor: "text-neon-pink",
-    titleColor: "text-white",
-    descColor: "text-gray-400",
-    glow: "bg-neon-pink", // Kolor tylnej poświaty
-    border: "border-neon-pink/50",
-    activeDot: "bg-neon-pink",
+  midnight: {
+    name: "Midnight",
+    bg: "bg-[#09090b]",
+    text: "text-white",
+    desc: "text-zinc-400",
+    accent: "bg-brand-primary", // Fioletowa kropka
+    card: "bg-white/5 border-white/10", // Styl karty
+    button: "bg-white/10 text-white border border-white/10",
   },
-  minimal: {
-    name: "Minimal",
-    iconColor: "text-white",
-    titleColor: "text-white",
-    descColor: "text-gray-500",
-    glow: "bg-white",
-    border: "border-white",
-    activeDot: "bg-white",
+  aura: {
+    name: "Aura",
+    bg: "bg-white",
+    text: "text-slate-900",
+    desc: "text-slate-500",
+    accent: "bg-rose-400", // Różowa kropka
+    card: "bg-slate-50 border-slate-200",
+    button: "bg-white text-slate-900 border border-slate-200 shadow-sm",
   },
-  sunset: {
-    name: "Sunset",
-    iconColor: "text-orange-400",
-    titleColor: "text-orange-100",
-    descColor: "text-orange-200/60",
-    glow: "bg-orange-500",
-    border: "border-orange-500/50",
-    activeDot: "bg-orange-500",
+  noir: {
+    name: "Noir",
+    bg: "bg-black",
+    text: "text-white",
+    desc: "text-zinc-500",
+    accent: "bg-white", // Biała kropka
+    card: "bg-zinc-900 border-zinc-800",
+    button: "bg-black text-white border border-white hover:bg-white hover:text-black transition-colors",
   },
 };
 
 type PreviewThemeKey = keyof typeof previewThemes;
 
 export function ThemePreviewBox({ className }: { className?: string }) {
-  const [activeTheme, setActiveTheme] = useState<PreviewThemeKey>("cyberpunk");
+  const [activeTheme, setActiveTheme] = useState<PreviewThemeKey>("midnight");
   const theme = previewThemes[activeTheme];
 
   return (
     <motion.div 
       className={cn(
         "relative rounded-3xl border overflow-hidden group transition-all duration-500",
-        // Dynamiczna zmiana koloru ramki
-        theme.border,
+        // Ramka zewnętrzna kontenera
+        activeTheme === "midnight" ? "border-white/10 bg-[#09090b]" :
+        activeTheme === "aura" ? "border-slate-200 bg-white" :
+        "border-zinc-800 bg-black",
         className
       )}
     >
-       {/* 1. DYNAMICZNA POŚWIATA W TLE */}
-       <div className="absolute inset-0 flex items-center justify-center opacity-20 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none">
+       {/* 1. TŁO / POŚWIATA */}
+       <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity duration-700 pointer-events-none">
           <motion.div 
-            animate={{ backgroundColor: theme.activeDot === "bg-neon-pink" ? "#FF00FF" : theme.activeDot === "bg-white" ? "#FFFFFF" : "#F97316" }}
-            className="w-[400px] h-[400px] blur-[120px] rounded-full mix-blend-screen" 
+            animate={{ backgroundColor: activeTheme === "midnight" ? "#6366f1" : activeTheme === "aura" ? "#fb7185" : "#ffffff" }}
+            className="w-[300px] h-[300px] blur-[100px] rounded-full mix-blend-screen opacity-40" 
           />
        </div>
 
-       {/* 2. ZAWARTOŚĆ KAFELKA */}
+       {/* 2. ZAWARTOŚĆ */}
        <div className="relative z-10 h-full flex flex-col justify-between p-8">
           
-          {/* Kropki (Interaktywne przyciski) */}
-          <div className="flex gap-3 mb-6">
-             {/* Kropka Cyberpunk */}
+          {/* SELEKTOR MOTYWÓW (Kropki) */}
+          <div className="flex gap-3 mb-6 p-2 bg-white/5 w-fit rounded-full backdrop-blur-md border border-white/5">
              <button 
-                onClick={() => setActiveTheme("cyberpunk")}
-                className={cn("w-4 h-4 rounded-full bg-neon-pink transition-transform hover:scale-125", activeTheme === "cyberpunk" && "ring-2 ring-white ring-offset-2 ring-offset-black scale-110")} 
+                onClick={() => setActiveTheme("midnight")}
+                className={cn("w-4 h-4 rounded-full transition-transform hover:scale-125 bg-brand-primary", activeTheme === "midnight" && "ring-2 ring-white scale-110")} 
+                title="Midnight"
              />
-             {/* Kropka Minimal */}
              <button 
-                onClick={() => setActiveTheme("minimal")}
-                className={cn("w-4 h-4 rounded-full bg-white transition-transform hover:scale-125", activeTheme === "minimal" && "ring-2 ring-white ring-offset-2 ring-offset-black scale-110")} 
+                onClick={() => setActiveTheme("aura")}
+                className={cn("w-4 h-4 rounded-full transition-transform hover:scale-125 bg-rose-300", activeTheme === "aura" && "ring-2 ring-slate-400 scale-110")} 
+                title="Aura"
              />
-             {/* Kropka Sunset */}
              <button 
-                onClick={() => setActiveTheme("sunset")}
-                className={cn("w-4 h-4 rounded-full bg-orange-500 transition-transform hover:scale-125", activeTheme === "sunset" && "ring-2 ring-white ring-offset-2 ring-offset-black scale-110")} 
+                onClick={() => setActiveTheme("noir")}
+                className={cn("w-4 h-4 rounded-full transition-transform hover:scale-125 bg-white", activeTheme === "noir" && "ring-2 ring-zinc-500 scale-110")} 
+                title="Noir"
              />
           </div>
 
-          {/* Treść zmieniająca się z animacją */}
+          {/* TREŚĆ */}
           <div>
             <motion.div
-                key={activeTheme} // Klucz wymusza animację przy zmianie
-                initial={{ opacity: 0, y: 10 }}
+                key={activeTheme} // Animacja przy zmianie
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <Palette className={cn("w-10 h-10 mb-4 transition-colors", theme.iconColor)} />
-                <h3 className={cn("text-2xl font-bold transition-colors", theme.titleColor)}>
-                    {theme.name} Theme
+                <div className={cn("p-3 w-fit rounded-xl mb-4 border", theme.card)}>
+                    <Palette className={cn("w-6 h-6", theme.text)} />
+                </div>
+                
+                <h3 className={cn("text-2xl font-bold transition-colors", theme.text)}>
+                    {theme.name}
                 </h3>
-                <p className={cn("mt-2 text-sm transition-colors", theme.descColor)}>
-                    {activeTheme === "cyberpunk" && "Neonowe światła i ciemność. Dla fanów sci-fi."}
-                    {activeTheme === "minimal" && "Czysta forma. Czarny tekst, białe tło. Brutalizm."}
-                    {activeTheme === "sunset" && "Ciepłe gradienty Miami. Vibe lat 80-tych."}
+                <p className={cn("mt-2 text-sm transition-colors", theme.desc)}>
+                    {activeTheme === "midnight" && "Deep focus. Dark interfaces for professionals."}
+                    {activeTheme === "aura" && "Light & Airy. Clean aesthetics for creators."}
+                    {activeTheme === "noir" && "Monochrome luxury. Timeless design."}
                 </p>
             </motion.div>
           </div>
 
-          {/* Mini podgląd przycisku */}
-          <div className="mt-6">
+          {/* PRZYKŁADOWY LINK */}
+          <div className="mt-8">
              <div className={cn(
-                 "w-full h-10 rounded-lg border flex items-center justify-center text-xs font-bold uppercase tracking-widest opacity-80",
-                 // Symulacja wyglądu przycisku w danym motywie
-                 activeTheme === "cyberpunk" ? "border-neon-pink text-neon-pink bg-neon-pink/10" :
-                 activeTheme === "minimal" ? "border-white text-black bg-white" :
-                 "border-orange-500 text-orange-400 bg-orange-500/10"
+                 "w-full h-12 rounded-xl flex items-center justify-center text-sm font-bold tracking-wide transition-all",
+                 theme.button
              )}>
-                 Preview Button
+                 Example Link
              </div>
           </div>
        </div>

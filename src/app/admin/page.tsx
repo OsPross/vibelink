@@ -3,67 +3,45 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserClient } from "@supabase/ssr";
-import { Plus, LogOut, LayoutDashboard, Loader2, Save, Palette } from "lucide-react";
+import { Plus, LogOut, LayoutDashboard, Loader2, Save, Palette, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { SortableLink } from "@/components/ui/SortableLink";
 import { AvatarUpload } from "@/components/ui/AvatarUpload";
-import { themes, ThemeKey } from "@/lib/themes"; 
+import { themes, ThemeKey } from "@/lib/themes";
 
 interface LinkItem {
-  id: number;
-  title: string;
-  url: string;
-  icon: string;
-  variant: string;
-  position: number;
+  id: number; title: string; url: string; icon: string; variant: string; position: number;
 }
 
 export default function AdminPage() {
   const router = useRouter();
   const [links, setLinks] = useState<LinkItem[]>([]);
-  
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [bio, setBio] = useState("");
-  const [currentTheme, setCurrentTheme] = useState<ThemeKey>("cyberpunk"); 
+  const [currentTheme, setCurrentTheme] = useState<ThemeKey>("cyberpunk");
   const [savingProfile, setSavingProfile] = useState(false);
-  
   const [loading, setLoading] = useState(true);
-  
   const [newTitle, setNewTitle] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newIcon, setNewIcon] = useState("Youtube");
-  // Domyślnie dodajemy jako wariant 1 (pink), ale użytkownik może zmienić w formularzu
-  const [newVariant, setNewVariant] = useState("pink"); 
+  const [newVariant, setNewVariant] = useState("pink");
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
-  // FETCH DATA
+  // --- DATA FETCHING ---
   useEffect(() => {
     const initData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+      if (!user) { router.push("/login"); return; }
       fetchLinks();
-      
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('avatar_url, bio, theme') 
-        .eq('id', user.id)
-        .single();
-      
+      const { data: profileData } = await supabase.from('profiles').select('avatar_url, bio, theme').eq('id', user.id).single();
       if (profileData) {
         setAvatarUrl(profileData.avatar_url);
         setBio(profileData.bio || "");
@@ -77,15 +55,11 @@ export default function AdminPage() {
   const fetchLinks = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase
-      .from("links")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("position", { ascending: true });
+    const { data } = await supabase.from("links").select("*").eq("user_id", user.id).order("position", { ascending: true });
     if (data) setLinks(data);
   };
 
-  // PROFILE ACTIONS
+  // --- HANDLERS ---
   const handleAvatarUpdate = async (url: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -97,30 +71,21 @@ export default function AdminPage() {
     setSavingProfile(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ bio: bio, theme: currentTheme, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
-      if (error) alert("Błąd: " + error.message);
-      else router.refresh();
+      const { error } = await supabase.from('profiles').update({ bio, theme: currentTheme, updated_at: new Date().toISOString() }).eq('id', user.id);
+      if (error) alert(error.message); else router.refresh();
     }
     setSavingProfile(false);
   };
 
-  // LINK ACTIONS
   const handleAddLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle || !newUrl) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    
     const newPosition = links.length > 0 ? Math.max(...links.map(l => l.position || 0)) + 1 : 0;
-    
     const { error } = await supabase.from("links").insert({
-      title: newTitle, url: newUrl, icon: newIcon, position: newPosition, user_id: user.id, 
-      variant: newVariant // <--- Zapisujemy wybrany w formularzu wariant
+      title: newTitle, url: newUrl, icon: newIcon, position: newPosition, user_id: user.id, variant: newVariant
     });
-    
     if (!error) { setNewTitle(""); setNewUrl(""); fetchLinks(); }
   };
 
@@ -130,18 +95,12 @@ export default function AdminPage() {
     fetchLinks();
   };
 
-  // NOWA FUNKCJA: Zmiana wariantu (koloru) po kliknięciu w pasek
   const handleToggleVariant = async (id: number, currentVariant: string) => {
     const newVar = currentVariant === 'cyan' ? 'pink' : 'cyan';
-    
-    // 1. Optimistic UI Update (żeby było widać od razu)
     setLinks(links.map(l => l.id === id ? { ...l, variant: newVar } : l));
-
-    // 2. Update DB
     await supabase.from('links').update({ variant: newVar }).eq('id', id);
   };
 
-  // DRAG & DROP
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -157,89 +116,137 @@ export default function AdminPage() {
   const updatePositionsInDb = async (items: LinkItem[]) => {
     for (const [index, item] of items.entries()) await supabase.from('links').update({ position: index }).eq('id', item.id);
   };
-  
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
 
-  if (loading) return <div className="min-h-screen bg-vibe-black flex items-center justify-center text-neon-pink"><Loader2 className="animate-spin"/></div>;
+  if (loading) return <div className="min-h-screen bg-vibe-black flex items-center justify-center"><Loader2 className="animate-spin text-brand-primary"/></div>;
 
   return (
-    <div className="min-h-screen bg-vibe-black text-white p-4 md:p-8 relative">
-       <div className="fixed top-0 left-0 w-full h-2 bg-vibe-gradient" />
-      <div className="max-w-5xl mx-auto space-y-8">
-        <header className="flex items-center justify-between pb-8 border-b border-white/10">
-          <div className="flex items-center gap-3"><LayoutDashboard className="text-neon-pink" /><h1 className="font-heading text-2xl font-bold">ADMIN PANEL</h1></div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-gray-400 hover:text-red-500 text-sm uppercase"><LogOut size={16} /> Wyloguj</button>
+    <div className="min-h-screen bg-[#09090b] text-white p-6 font-sans selection:bg-brand-primary selection:text-white">
+       <div className="bg-noise fixed inset-0 opacity-[0.04] pointer-events-none" />
+       <div className="fixed top-[-10%] left-[20%] w-[500px] h-[500px] bg-brand-primary/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+        
+        {/* HEADER */}
+        <header className="web3-card rounded-2xl px-6 py-4 flex items-center justify-between shadow-lg shadow-black/20">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-brand-primary to-brand-accent rounded-lg flex items-center justify-center shadow-lg shadow-brand-primary/20">
+                <LayoutDashboard size={16} className="text-white" />
+            </div>
+            <h1 className="font-bold text-xl tracking-tight">Dashboard</h1>
+          </div>
+          <button onClick={handleLogout} className="flex items-center gap-2 text-zinc-400 hover:text-red-400 text-sm font-medium transition-colors px-3 py-2 hover:bg-white/5 rounded-lg">
+            <LogOut size={16} /> Wyloguj
+          </button>
         </header>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* LEWA KOLUMNA */}
-          <div className="md:col-span-1 space-y-6">
-            <div className="bg-vibe-dark-gray p-6 rounded-xl border border-white/10 space-y-6">
-              <h2 className="text-neon-pink font-bold flex items-center gap-2">YOUR PROFILE</h2>
+        <div className="grid md:grid-cols-12 gap-8">
+          
+          {/* LEWA KOLUMNA: USTAWIENIA (Szerokość 4/12) */}
+          <div className="md:col-span-4 space-y-6">
+            
+            {/* PROFIL & MOTYW */}
+            <div className="web3-card p-6 rounded-3xl space-y-6">
+              <div className="flex items-center gap-2 mb-2">
+                 <Settings size={18} className="text-brand-primary"/>
+                 <h2 className="font-bold text-lg">Profile Settings</h2>
+              </div>
+              
               <AvatarUpload currentAvatarUrl={avatarUrl} onUploadComplete={handleAvatarUpdate} />
               
               <div className="space-y-2">
-                <label className="text-xs text-gray-500 uppercase tracking-widest">Bio</label>
-                <textarea value={bio} onChange={(e) => setBio(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded p-3 text-sm text-gray-300 focus:border-neon-pink outline-none resize-none" rows={3}/>
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1">Bio / Opis</label>
+                <textarea 
+                    value={bio} 
+                    onChange={(e) => setBio(e.target.value)} 
+                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-zinc-200 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary outline-none resize-none transition-all" 
+                    rows={3}
+                    placeholder="Tell your story..."
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-gray-500 uppercase tracking-widest flex items-center gap-2"><Palette size={12}/> Theme</label>
-                <select value={currentTheme} onChange={(e) => setCurrentTheme(e.target.value as ThemeKey)} className="w-full bg-black/50 border border-white/10 rounded p-3 text-sm text-white focus:border-neon-pink outline-none">
-                    {Object.entries(themes).map(([key, value]) => (<option key={key} value={key}>{value.label}</option>))}
-                </select>
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider ml-1 flex items-center gap-2">
+                   Theme Style
+                </label>
+                <div className="relative">
+                    <Palette className="absolute left-3 top-3 text-zinc-500" size={16}/>
+                    <select 
+                        value={currentTheme} 
+                        onChange={(e) => setCurrentTheme(e.target.value as ThemeKey)} 
+                        className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:border-brand-primary outline-none appearance-none cursor-pointer"
+                    >
+                        {Object.entries(themes).map(([key, value]) => (<option key={key} value={key} className="bg-zinc-900">{value.label}</option>))}
+                    </select>
+                </div>
               </div>
-              <button onClick={handleProfileSave} disabled={savingProfile} className="w-full py-2 bg-white/5 border border-white/10 rounded text-xs font-bold text-white hover:bg-white/10 transition-colors flex items-center justify-center gap-2">
-                {savingProfile ? <Loader2 size={14} className="animate-spin"/> : <Save size={14} />} ZAPISZ ZMIANY
+
+              <button 
+                onClick={handleProfileSave} 
+                disabled={savingProfile} 
+                className="w-full py-3 bg-white text-black rounded-xl text-sm font-bold hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-white/5"
+              >
+                {savingProfile ? <Loader2 size={16} className="animate-spin"/> : <Save size={16} />} 
+                Save Changes
               </button>
             </div>
 
             {/* DODAWANIE LINKU */}
-            <div className="bg-vibe-dark-gray p-6 rounded-xl border border-white/10 sticky top-8">
-              <h2 className="text-neon-cyan font-bold mb-4 flex items-center gap-2"><Plus size={18} /> NEW LINK</h2>
+            <div className="web3-card p-6 rounded-3xl sticky top-6 border-t-4 border-t-brand-primary/50">
+              <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Plus className="text-brand-primary" size={20}/> Add New Link
+              </h2>
               <form onSubmit={handleAddLink} className="space-y-4">
-                <input type="text" placeholder="Tytuł" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded p-3 text-sm outline-none focus:border-neon-pink" />
-                <input type="url" placeholder="URL" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded p-3 text-sm outline-none focus:border-neon-pink" />
-                <select value={newIcon} onChange={(e) => setNewIcon(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded p-3 text-sm outline-none text-gray-300">
-                    <option value="Youtube">Youtube</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="Twitter">Twitter</option>
-                    <option value="Github">Github</option>
-                    <option value="Music">Music</option>
-                    <option value="default">Link</option>
-                </select>
+                <input type="text" placeholder="Tytuł linku" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-brand-primary transition-all" />
+                <input type="url" placeholder="https://..." value={newUrl} onChange={(e) => setNewUrl(e.target.value)} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none focus:border-brand-primary transition-all" />
                 
-                {/* WYBÓR WARIANTU (KOLORU) */}
-                <div className="space-y-1">
-                    <label className="text-xs text-gray-500">Kolor początkowy</label>
-                    <div className="flex gap-2">
-                        <button type="button" onClick={() => setNewVariant("pink")} className={cn("flex-1 py-2 rounded border text-xs font-bold transition-all", newVariant === "pink" ? "bg-neon-pink/20 border-neon-pink text-neon-pink" : "border-white/10 text-gray-500")}>1 (Pink/Main)</button>
-                        <button type="button" onClick={() => setNewVariant("cyan")} className={cn("flex-1 py-2 rounded border text-xs font-bold transition-all", newVariant === "cyan" ? "bg-neon-cyan/20 border-neon-cyan text-neon-cyan" : "border-white/10 text-gray-500")}>2 (Cyan/Alt)</button>
+                <div className="grid grid-cols-2 gap-3">
+                    <select value={newIcon} onChange={(e) => setNewIcon(e.target.value)} className="bg-black/20 border border-white/10 rounded-xl p-3 text-sm outline-none text-zinc-300">
+                        <option value="Youtube">Youtube</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Twitter">Twitter</option>
+                        <option value="Github">Github</option>
+                        <option value="Music">Music</option>
+                        <option value="default">Link</option>
+                    </select>
+                    <div className="flex bg-black/20 border border-white/10 rounded-xl p-1">
+                        <button type="button" onClick={() => setNewVariant("pink")} className={cn("flex-1 rounded-lg text-xs font-bold transition-all", newVariant === "pink" ? "bg-white/10 text-brand-accent" : "text-zinc-500")}>Main</button>
+                        <button type="button" onClick={() => setNewVariant("cyan")} className={cn("flex-1 rounded-lg text-xs font-bold transition-all", newVariant === "cyan" ? "bg-white/10 text-brand-primary" : "text-zinc-500")}>Alt</button>
                     </div>
                 </div>
 
-                <button type="submit" className="w-full bg-white text-black font-bold py-3 rounded hover:bg-gray-200 mt-2">DODAJ LINK</button>
+                <button type="submit" className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-brand-primary/20">
+                    Add to Profile
+                </button>
               </form>
             </div>
           </div>
 
-          {/* PRAWA KOLUMNA */}
-          <div className="md:col-span-2 space-y-4">
-            <h2 className="text-gray-400 text-sm tracking-widest mb-4">
-                LINKS ({currentTheme.toUpperCase()} THEME PREVIEW)
-            </h2>
+          {/* PRAWA KOLUMNA: LISTA (Szerokość 8/12) */}
+          <div className="md:col-span-8 space-y-4">
+            <div className="flex items-center justify-between px-2">
+                <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Active Links</h2>
+                <span className="text-xs bg-white/10 px-2 py-1 rounded text-zinc-400">{links.length} items</span>
+            </div>
+            
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={links.map(l => l.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3">
+                <div className="space-y-3 pb-20">
                   {links.map((link) => (
                     <SortableLink 
                         key={link.id} 
                         link={link} 
-                        theme={currentTheme} // Przekazujemy motyw do podglądu
+                        theme={currentTheme} 
                         onDelete={handleDeleteLink} 
-                        onToggleVariant={handleToggleVariant} // Przekazujemy funkcję zmiany koloru
+                        onToggleVariant={handleToggleVariant} 
                     />
                   ))}
+                  {links.length === 0 && (
+                      <div className="text-center py-20 border-2 border-dashed border-white/10 rounded-3xl text-zinc-500">
+                          <p>No links yet.</p>
+                          <p className="text-sm mt-1">Add one from the left panel.</p>
+                      </div>
+                  )}
                 </div>
               </SortableContext>
             </DndContext>

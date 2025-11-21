@@ -1,126 +1,117 @@
 export const themes = {
-  cyberpunk: {
-    label: "Cyberpunk (Original)",
-    bg: "bg-[#050505] bg-grid-pattern",
+  // 1. MIDNIGHT (Spójny z nowym Landing Pagem)
+  cyberpunk: { // Zostawiamy klucz 'cyberpunk' dla kompatybilności wstecznej, ale zmieniamy wygląd na "Midnight"
+    label: "Midnight (Default)",
+    bg: "bg-[#09090b] bg-noise", // Ciemne tło z szumem
+    text: "text-zinc-100",
+    gradient: "bg-brand-primary", // Fioletowa poświata
+    footer: "text-zinc-500 hover:text-zinc-300",
+    variants: {
+      pink: { // Styl: Primary Glass
+        border: "border border-white/10",
+        glow: "hover:shadow-[0_0_30px_-10px_rgba(99,102,241,0.4)] hover:border-brand-primary/50",
+        text: "text-white font-medium tracking-wide",
+        bg: "bg-white/5 backdrop-blur-xl hover:bg-white/10"
+      },
+      cyan: { // Styl: Ghost
+        border: "border border-transparent",
+        glow: "hover:bg-white/5",
+        text: "text-zinc-300 font-medium tracking-wide",
+        bg: "bg-transparent hover:text-white"
+      }
+    }
+  },
+
+  // 2. AURA (Nowoczesny Jasny)
+  minimal: { // Klucz 'minimal' -> Aura
+    label: "Aura (Light)",
+    // Piękny, subtelny gradient w tle
+    bg: "bg-gradient-to-tr from-rose-50 via-white to-blue-50", 
+    text: "text-slate-900",
+    gradient: "bg-rose-400", // Różowa poświata
+    footer: "text-slate-400 hover:text-slate-900 font-bold uppercase tracking-widest",
+    variants: {
+      pink: {
+        border: "border border-white/40 shadow-sm",
+        glow: "hover:shadow-lg hover:-translate-y-0.5 transition-all",
+        text: "text-slate-800 font-bold",
+        bg: "bg-white/60 backdrop-blur-md"
+      },
+      cyan: {
+        border: "border border-slate-200",
+        glow: "hover:bg-white hover:shadow-md transition-all",
+        text: "text-slate-600 font-medium",
+        bg: "bg-transparent"
+      }
+    }
+  },
+
+  // 3. NOIR (Luksusowa Czerń)
+  matrix: { // Klucz 'matrix' -> Noir
+    label: "Noir (Luxury)",
+    bg: "bg-[#000000]", 
     text: "text-white",
-    footer: "text-gray-500",
+    gradient: "bg-white", // Biała poświata
+    footer: "text-zinc-600 hover:text-white font-sans",
     variants: {
       pink: {
-        border: "border border-neon-pink",
-        glow: "hover:shadow-[0_0_25px_#FF00FF]",
-        text: "text-neon-pink font-bold tracking-wider",
-        bg: "bg-[#121212]/90 backdrop-blur-xl"
+        border: "border border-white",
+        glow: "hover:bg-white hover:text-black transition-colors duration-300",
+        text: "text-white font-bold uppercase tracking-widest",
+        bg: "bg-black"
       },
       cyan: {
-        border: "border border-neon-cyan",
-        glow: "hover:shadow-[0_0_25px_#00FFFF]",
-        text: "text-neon-cyan font-bold tracking-wider",
-        bg: "bg-[#121212]/90 backdrop-blur-xl"
+        border: "border border-zinc-800",
+        glow: "hover:border-white transition-colors duration-300",
+        text: "text-zinc-400 hover:text-white font-bold uppercase tracking-widest",
+        bg: "bg-black"
       }
     }
   },
-  sunset: {
-    label: "Miami Sunset",
-    bg: "bg-gradient-to-br from-orange-500 via-pink-600 to-purple-900 animate-gradient-xy",
+
+  // 4. SUNSET (Glassmorphism)
+  sunset: { // Klucz 'sunset' -> Glass Sunset
+    label: "Sunset Glass",
+    // Głęboki gradient
+    bg: "bg-[#0f0c29] bg-gradient-to-br from-[#24243e] via-[#302b63] to-[#0f0c29]",
     text: "text-white drop-shadow-md",
-    footer: "text-white/60 hover:text-white",
+    gradient: "bg-pink-500",
+    footer: "text-white/40 hover:text-white",
     variants: {
       pink: {
-        border: "border-2 border-white/20",
-        glow: "hover:shadow-[0_0_20px_rgba(255,255,255,0.4)]",
+        border: "border-t border-l border-white/20 border-b border-r border-black/20",
+        glow: "hover:bg-white/10 hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.37)]",
         text: "text-white font-bold",
-        bg: "bg-white/10 backdrop-blur-md hover:bg-white/20"
+        bg: "bg-white/5 backdrop-blur-[8px]"
       },
       cyan: {
-        border: "border-2 border-yellow-300/50",
-        glow: "hover:shadow-[0_0_20px_rgba(253,224,71,0.6)]",
-        text: "text-yellow-300 font-bold",
-        bg: "bg-black/20 backdrop-blur-md hover:bg-black/30"
+        border: "border border-white/10",
+        glow: "hover:bg-white/5",
+        text: "text-pink-200 font-bold",
+        bg: "bg-transparent"
       }
     }
   },
-  matrix: {
-    label: "The Matrix",
-    bg: "bg-black bg-scanlines animate-crt",
-    text: "text-green-500 font-mono shadow-[0_0_5px_rgba(34,197,94,0.8)]",
-    footer: "text-green-800 hover:text-green-400 font-mono",
-    variants: {
-      pink: {
-        border: "border border-green-700",
-        glow: "hover:shadow-[0_0_15px_rgba(21,128,61,1)]",
-        text: "text-green-600 font-mono uppercase",
-        bg: "bg-black border-l-4 border-l-green-700"
-      },
-      cyan: {
-        border: "border border-green-400",
-        glow: "hover:shadow-[0_0_15px_rgba(74,222,128,1)]",
-        text: "text-green-400 font-mono uppercase",
-        bg: "bg-black border-l-4 border-l-green-400"
-      }
-    }
-  },
-  dracula: {
-    label: "Dracula (Dark)",
-    bg: "bg-[#0f0c29] bg-gradient-to-b from-[#0f0c29] via-[#302b63] to-[#24243e]",
-    text: "text-gray-200",
-    footer: "text-gray-500 hover:text-red-500",
-    variants: {
-      pink: {
-        border: "border border-red-600",
-        glow: "hover:shadow-[0_0_25px_rgba(220,38,38,0.6)]",
-        text: "text-red-500 font-bold",
-        bg: "bg-[#0f0c29]/80 backdrop-blur-sm"
-      },
-      cyan: {
-        border: "border border-purple-400",
-        glow: "hover:shadow-[0_0_25px_rgba(192,132,252,0.6)]",
-        text: "text-purple-400 font-bold",
-        bg: "bg-[#0f0c29]/80 backdrop-blur-sm"
-      }
-    }
-  },
-  // --- TUTAJ JEST NAPRAWIONY MOTYW ---
-  minimal: {
-    label: "Minimal (Light)",
-    // ZMIANA TUTAJ: Dodajemy 'bg-graph-paper' i 'animate-breathe'
-    bg: "bg-graph-paper animate-breathe", 
-    text: "text-black",
-    // Dodajemy też gradient do 'kulek' w tle (tych blur-3xl), żeby były ledwo widoczne szare/niebieskie
-    gradient: "bg-slate-400", 
-    footer: "text-zinc-600 hover:text-black font-bold uppercase tracking-widest",
-    variants: {
-      pink: {
-        border: "border-2 border-black",
-        glow: "shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#000000]",
-        text: "text-black font-black tracking-tight",
-        bg: "bg-white"
-      },
-      cyan: {
-        border: "border-2 border-black",
-        glow: "shadow-[4px_4px_0px_0px_#a1a1aa] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_#a1a1aa]",
-        text: "text-white font-black tracking-tight",
-        bg: "bg-zinc-900"
-      }
-    }
-  },
-  // -----------------------------------
+  
+  // 5. VAPORWAVE (Zostawiamy jako opcję "Fun")
   vaporwave: {
     label: "Vaporwave",
-    bg: "bg-indigo-900 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-black",
-    text: "text-pink-300 shadow-[2px_2px_0px_#000]",
+    bg: "bg-indigo-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-indigo-900 to-black",
+    text: "text-pink-300 shadow-[0_0_10px_rgba(236,72,153,0.5)]",
+    gradient: "bg-cyan-500",
     footer: "text-indigo-400 hover:text-pink-400",
     variants: {
       pink: {
-        border: "border-b-4 border-pink-500",
-        glow: "hover:brightness-110",
+        border: "border border-pink-500/50",
+        glow: "hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]",
         text: "text-pink-300 font-bold italic",
-        bg: "bg-indigo-950/50 backdrop-blur-md"
+        bg: "bg-indigo-900/40 backdrop-blur-md"
       },
       cyan: {
-        border: "border-b-4 border-yellow-400",
-        glow: "hover:brightness-110",
-        text: "text-yellow-300 font-bold italic",
-        bg: "bg-indigo-950/50 backdrop-blur-md"
+        border: "border border-cyan-500/50",
+        glow: "hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]",
+        text: "text-cyan-300 font-bold italic",
+        bg: "bg-indigo-900/40 backdrop-blur-md"
       }
     }
   },
