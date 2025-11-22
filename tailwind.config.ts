@@ -10,47 +10,60 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Nowa paleta Web 3.0 (Głęboki Zinc zamiast czystej czerni)
-        "vibe-black": "#09090b", // Zinc 950
-        "vibe-card": "rgba(255, 255, 255, 0.03)",
-        "vibe-border": "rgba(255, 255, 255, 0.08)",
-        
-        // Akcenty (Smooth Gradients)
-        "brand-primary": "#6366f1", // Indigo
-        "brand-secondary": "#a855f7", // Purple
-        "brand-accent": "#ec4899", // Pink (ale łagodniejszy)
-        
-        // Zachowujemy kompatybilność wsteczną dla NeonLink (zmiękczone)
-        "neon-pink": "#d946ef", 
-        "neon-cyan": "#06b6d4", 
+        "vibe-black": "#09090b",
+        "brand-primary": "#6366f1",
+        "brand-secondary": "#a855f7",
+        "brand-accent": "#ec4899",
+        // Kolory specyficzne dla nowych motywów
+        "matrix-green": "#00ff41",
+        "cyber-yellow": "#fcee0a",
+        "blueprint-blue": "#1e3a8a",
       },
       backgroundImage: {
         "vibe-gradient": "linear-gradient(to right, #6366f1, #a855f7, #ec4899)",
-        "mesh-gradient": "radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        // Heading też ustawiamy na Inter dla czystości (Web 3.0 style)
-        heading: ["var(--font-inter)", "sans-serif"], 
+        sans: ["var(--font-inter)", "sans-serif"],
+        mono: ["monospace"], // Dla motywu Terminal
       },
       animation: {
+        "pulse-fast": "pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "float": "float 6s ease-in-out infinite",
+        "float-delayed": "float 6s ease-in-out 3s infinite",
         "spotlight": "spotlight 2s ease .75s 1 forwards",
-        "shimmer": "shimmer 2s linear infinite",
+        "gradient-xy": "gradient-xy 15s ease infinite",
+        "rain": "rain 1s linear infinite",
+        "matrix": "matrix 2s linear infinite",
+        "scanline": "scanline 8s linear infinite",
+        "blob": "blob 7s infinite",
       },
       keyframes: {
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },
         },
-        shimmer: {
-          from: { backgroundPosition: "0 0" },
-          to: { backgroundPosition: "-200% 0" },
-        },
         spotlight: {
           "0%": { opacity: "0", transform: "translate(-72%, -62%) scale(0.5)" },
           "100%": { opacity: "1", transform: "translate(-50%,-40%) scale(1)" },
         },
+        "gradient-xy": {
+          "0%, 100%": { backgroundSize: "400% 400%", backgroundPosition: "left center" },
+          "50%": { backgroundSize: "200% 200%", backgroundPosition: "right center" }
+        },
+        rain: {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(100vh)" }
+        },
+        scanline: {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(100%)" }
+        },
+        blob: {
+          "0%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+          "100%": { transform: "translate(0px, 0px) scale(1)" }
+        }
       },
     },
   },
