@@ -5,8 +5,11 @@ import { cn } from "@/lib/utils";
 import { ExternalLink } from "lucide-react";
 import React from "react";
 import { themes, ThemeKey } from "@/lib/themes";
+// Import akcji
+import { incrementLinkClick } from "@/app/actions";
 
 interface NeonLinkProps {
+  id?: number; // Dodajemy ID, żeby wiedzieć co zliczać
   href: string;
   title: string;
   icon?: React.ReactNode;
@@ -16,6 +19,7 @@ interface NeonLinkProps {
 }
 
 export const NeonLink = ({
+  id,
   href,
   title,
   icon,
@@ -25,16 +29,20 @@ export const NeonLink = ({
 }: NeonLinkProps) => {
   
   const themeConfig = themes[themeName] || themes.cyberpunk;
-  
-  // Fallback do 'pink' jeśli wariant jest nieznany
   const variantKey = (variant === 'cyan' ? 'cyan' : 'pink') as keyof typeof themeConfig.variants;
   const styles = themeConfig.variants[variantKey];
+
+  // Obsługa kliknięcia
+  const handleClick = () => {
+    if (id) incrementLinkClick(id);
+  };
 
   return (
     <motion.a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={handleClick} // <--- ZLICZANIE
       className={cn(
         "group relative flex w-full items-center justify-between rounded-xl border p-4 transition-all duration-300",
         "backdrop-blur-sm",
@@ -45,7 +53,6 @@ export const NeonLink = ({
       whileHover={{ scale: 1.02 }} 
       whileTap={{ scale: 0.98 }}
     >
-       {/* Glow effect */}
        <div className={cn("absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300", styles.glow)} />
 
       <div className="flex items-center gap-4 relative z-10">
@@ -55,9 +62,6 @@ export const NeonLink = ({
           </span>
         )}
         
-        {/* POPRAWKA TUTAJ: Usunąłem 'text-white'. 
-            Teraz tekst bierze kolor z 'styles.text', który jest zdefiniowany w themes.ts.
-            Dzięki temu w Minimal Light tekst będzie czarny. */}
         <span className={cn("font-medium text-lg tracking-wide transition-colors", styles.text)}>
           {title}
         </span>

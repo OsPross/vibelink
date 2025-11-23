@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { NeonLink } from "./NeonLink";
 import { getYoutubeId, getSpotifyEmbedUrl } from "@/lib/utils";
-import { themes, ThemeKey } from "@/lib/themes";
+import { ThemeKey } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { getLatestVideoId } from "@/app/actions"; 
-import { Loader2, Video, PlayCircle } from "lucide-react";
+import { Loader2, Video, Lock, Unlock, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface MediaBlockProps {
   id: number;
@@ -16,17 +17,25 @@ interface MediaBlockProps {
   icon?: any;
   themeName: ThemeKey;
   variant: string;
+  password?: string; // Nowe pole
 }
 
-export function MediaBlock({ id, title, url, type, icon, themeName, variant }: MediaBlockProps) {
+export function MediaBlock({ id, title, url, type, icon, themeName, variant, password }: MediaBlockProps) {
   const [dynamicVideoId, setDynamicVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Stany dla Secret Link
+  const [isLocked, setIsLocked] = useState(type === 'locked');
+  const [inputPassword, setInputPassword] = useState("");
+  const [shake, setShake] = useState(false);
 
   // Pobieramy style motywu
-  const themeConfig = themes[themeName] || themes.cyberpunk;
-  // Ustalamy, którego wariantu użyć (pink/cyan)
-  const variantKey = (variant === 'cyan' ? 'cyan' : 'pink') as keyof typeof themeConfig.variants;
-  const styles = themeConfig.variants[variantKey];
+  const styles = {
+      // Prosty fallback do kolorów jeśli motyw nie jest w pełni załadowany
+      text: themeName === 'minimal' ? 'text-black' : 'text-white',
+      border: themeName === 'minimal' ? 'border-black' : 'border-white/20',
+      bg: themeName === 'minimal' ? 'bg-gray-100' : 'bg-black/40'
+  };
 
   useEffect(() => {
     if (type === "youtube_latest" && url) {
@@ -36,6 +45,53 @@ export function MediaBlock({ id, title, url, type, icon, themeName, variant }: M
         .finally(() => setLoading(false));
     }
   }, [type, url]);
+
+  // --- LOGIKA SECRET LINK ---
+  const handleUnlock = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputPassword === password) {
+        setIsLocked(false);
+    } else {
+        setShake(true);
+        setTimeout(() => setShake(false), 500); // Reset trzęsienia
+        setInputPassword("");
+    }
+  };
+
+  // 0. SECRET LINK (LOCKED STATE)
+  if (isLocked && type === 'locked') {
+      return (
+        <motion.div 
+            animate={shake ? { x: [-5, 5, -5, 5, 0] } : {}}
+            transition={{ duration: 0.4 }}
+            className={cn(
+                "w-full rounded-2xl overflow-hidden shadow-2xl mb-4 group relative z-10 border p-6 flex flex-col items-center justify-center gap-4 text-center transition-colors",
+                "border-red-500/50 bg-red-950/10 backdrop-blur-md" // Wygląd "Access Denied"
+            )}
+        >
+            <div className="p-3 rounded-full bg-red-500/20 text-red-500 animate-pulse">
+                <Lock size={24} />
+            </div>
+            <div>
+                <h3 className="font-bold text-red-500 uppercase tracking-widest text-sm">Encrypted Content</h3>
+                <p className="text-xs text-red-400/70 mt-1">Wpisz hasło, aby odblokować.</p>
+            </div>
+            
+            <form onSubmit={handleUnlock} className="flex w-full max-w-[200px] relative">
+                <input 
+                    type="password" 
+                    placeholder="ACCESS CODE" 
+                    value={inputPassword}
+                    onChange={(e) => setInputPassword(e.target.value)}
+                    className="w-full bg-black/50 border border-red-500/30 rounded-lg px-3 py-2 text-xs text-white text-center tracking-widest focus:border-red-500 outline-none placeholder:text-red-500/30"
+                />
+                <button type="submit" className="absolute right-1 top-1 bottom-1 px-2 bg-red-500/20 hover:bg-red-500 text-red-500 hover:text-white rounded text-[10px] transition-colors">
+                    <ArrowRight size={12} />
+                </button>
+            </form>
+        </motion.div>
+      );
+  }
 
   // 1. YOUTUBE (Specific Video)
   if (type === "youtube") {
@@ -76,12 +132,7 @@ export function MediaBlock({ id, title, url, type, icon, themeName, variant }: M
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
-            {/* ZMIANA: Używamy stylów motywu zamiast bg-red-600 */}
-            <div className={cn(
-                "p-3 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 backdrop-blur-md",
-                styles.bg, // Tło z wariantu
-                styles.text // Kolor tekstu z wariantu
-            )}>
+            <div className="p-3 bg-black/50 text-white text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 backdrop-blur-md">
                <Video size={14} /> LATEST VIDEO
             </div>
           </>
@@ -101,7 +152,6 @@ export function MediaBlock({ id, title, url, type, icon, themeName, variant }: M
 
     return (
       <div className={cn("w-full mb-4 overflow-hidden rounded-2xl shadow-lg border relative z-10", styles.border)}>
-        {/* Spotify ma własne style iframe, ale ramka będzie pasować do motywu */}
         <iframe 
             src={embedUrl} 
             width="100%" 
@@ -117,20 +167,29 @@ export function MediaBlock({ id, title, url, type, icon, themeName, variant }: M
   // 4. HEADER
   if (type === "header") {
     return (
-      <h3 className={cn("text-center font-bold text-xl tracking-[0.2em] uppercase mt-8 mb-4 opacity-90 relative z-10", themeConfig.text)}>
+      <h3 className={cn("text-center font-bold text-xl tracking-[0.2em] uppercase mt-8 mb-4 opacity-90 relative z-10", styles.text)}>
         {title}
       </h3>
     );
   }
 
-  // 5. LINK
+  // 5. ZWYKŁY LINK (LUB ODBLOKOWANY SECRET LINK)
   return (
-    <NeonLink 
-      href={url} 
-      title={title} 
-      icon={icon} 
-      themeName={themeName} 
-      variant={variant} 
-    />
+    <motion.div
+        initial={type === 'locked' ? { opacity: 0, scale: 0.8 } : {}}
+        animate={type === 'locked' ? { opacity: 1, scale: 1 } : {}}
+    >
+        <NeonLink 
+        id={id}
+        href={url} 
+        title={title} 
+        icon={type === 'locked' ? <Unlock /> : icon} // Jeśli odblokowany, pokaż otwartą kłódkę
+        themeName={themeName} 
+        variant={variant} 
+        />
+        {type === 'locked' && (
+            <p className="text-center text-[10px] text-green-500 uppercase tracking-widest mt-1 animate-pulse">Access Granted</p>
+        )}
+    </motion.div>
   );
 }

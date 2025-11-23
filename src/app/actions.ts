@@ -79,3 +79,12 @@ export async function getLatestVideoId(channelUrl: string): Promise<string | nul
     return null;
   }
 }
+
+// 5. Zliczanie kliknięcia w link
+export async function incrementLinkClick(linkId: number) {
+  try {
+    await supabase.rpc('increment_link_click', { link_id: linkId });
+  } catch (e) {
+    console.error("Błąd zliczania kliknięcia:", e);
+  }
+}

@@ -2,25 +2,42 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, RefreshCcw } from "lucide-react";
+import { GripVertical, Trash2, Pencil, Video, Music, Link as LinkIcon, Type, Lock, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { themes, ThemeKey } from "@/lib/themes"; // Import motywów
+import { ThemeKey } from "@/lib/themes";
 
+// POPRAWKA: Dodano 'position' do interfejsu, żeby zgadzał się z AdminPage
 interface LinkItem {
   id: number;
   title: string;
   url: string;
-  variant: string; // 'pink' lub 'cyan'
+  variant: string;
+  type: string;
+  icon: string;
+  position: number; 
 }
 
 interface SortableLinkProps {
   link: LinkItem;
-  theme: ThemeKey; // Nowy prop: aktualny motyw
+  theme: ThemeKey;
   onDelete: (id: number) => void;
-  onToggleVariant: (id: number, currentVariant: string) => void; // Nowa funkcja
+  onToggleVariant: (id: number, currentVariant: string) => void;
+  onEdit: (link: LinkItem) => void;
 }
 
-export function SortableLink({ link, theme, onDelete, onToggleVariant }: SortableLinkProps) {
+// Helper do ikon typu
+const getTypeIcon = (type: string) => {
+    switch(type) {
+        case 'youtube': 
+        case 'youtube_latest': return <Video size={14} className="text-red-500"/>;
+        case 'spotify': return <Music size={14} className="text-green-500"/>;
+        case 'header': return <Type size={14} className="text-yellow-500"/>;
+        case 'locked': return <Lock size={14} className="text-orange-500"/>;
+        default: return <LinkIcon size={14} className="text-blue-400"/>;
+    }
+}
+
+export function SortableLink({ link, theme, onDelete, onToggleVariant, onEdit }: SortableLinkProps) {
   const {
     attributes,
     listeners,
@@ -37,63 +54,71 @@ export function SortableLink({ link, theme, onDelete, onToggleVariant }: Sortabl
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Pobieramy style z motywu
-  const currentTheme = themes[theme] || themes.cyberpunk;
-  const variantKey = (link.variant === 'cyan' ? 'cyan' : 'pink') as keyof typeof currentTheme.variants;
-  const variantStyles = currentTheme.variants[variantKey];
-
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center justify-between border p-4 rounded-lg transition-colors select-none",
-        // Używamy kolorów z motywu zamiast szarego tła
-        variantStyles.bg,
-        variantStyles.border,
-        isDragging && "shadow-xl scale-105"
+        "group flex items-center justify-between bg-[#09090b] border border-white/10 p-3 rounded-xl transition-all select-none hover:border-white/20",
+        isDragging && "shadow-2xl scale-105 border-brand-primary ring-1 ring-brand-primary"
       )}
     >
       <div className="flex items-center gap-4 w-full overflow-hidden">
-        {/* Uchwyt do przeciągania */}
-        <button
-          {...attributes}
-          {...listeners}
-          className={cn("touch-none p-2 cursor-grab active:cursor-grabbing", variantStyles.text)}
-        >
-          <GripVertical size={20} />
+        
+        {/* Uchwyt */}
+        <button {...attributes} {...listeners} className="touch-none p-2 text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing">
+          <GripVertical size={18} />
         </button>
 
-        {/* KLIKALNY PASEK KOLORU (Zmienia wariant) */}
+        {/* Wskaźnik Koloru (Klikalny) */}
         <button
           onClick={() => onToggleVariant(link.id, link.variant)}
           className={cn(
-            "w-3 h-12 rounded-full transition-all hover:scale-110 active:scale-95 flex items-center justify-center group/color",
-             // Tutaj musimy użyć tła z wariantu, ale często jest ono półprzezroczyste.
-             // Dla paska wskaźnika użyjmy koloru tekstu jako tła (border color z wariantu zazwyczaj jest jaskrawy)
-             link.variant === 'cyan' ? "bg-cyan-400" : "bg-pink-500"
+            "w-1.5 h-10 rounded-full transition-all hover:scale-110 active:scale-95 shrink-0",
+             link.variant === 'cyan' ? "bg-neon-cyan shadow-[0_0_10px_cyan]" : "bg-neon-pink shadow-[0_0_10px_magenta]"
           )}
-          title="Kliknij, aby zmienić kolor"
-        >
-            <RefreshCcw size={10} className="text-black opacity-0 group-hover/color:opacity-100 transition-opacity"/>
-        </button>
+          title={`Styl: ${link.variant}`}
+        />
         
         {/* Treść */}
-        <div className="min-w-0">
-          <h3 className={cn("font-bold truncate", currentTheme.text)}>{link.title}</h3>
-          <p className={cn("text-xs truncate opacity-70", currentTheme.text)}>
-            {link.url}
-          </p>
+        <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
+                <div className="bg-white/5 p-1 rounded text-zinc-400">
+                    {getTypeIcon(link.type)}
+                </div>
+                <h3 className="font-bold text-white text-sm truncate">{link.title}</h3>
+                
+                {/* Badge Typu */}
+                <span className="text-[9px] font-mono uppercase tracking-wider bg-white/5 px-1.5 py-0.5 rounded text-zinc-500">
+                    {link.type.replace('_', ' ')}
+                </span>
+            </div>
+            
+            {link.type !== 'header' && (
+                <p className="text-[10px] text-zinc-500 truncate font-mono pl-8">
+                    {link.url}
+                </p>
+            )}
         </div>
       </div>
 
-      {/* Usuwanie */}
-      <button
-        onClick={() => onDelete(link.id)}
-        className="p-2 ml-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
-      >
-        <Trash2 size={18} />
-      </button>
+      {/* Akcje */}
+      <div className="flex items-center gap-1">
+        <button
+            onClick={() => onEdit(link)}
+            className="p-2 text-zinc-500 hover:text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors"
+            title="Edytuj"
+        >
+            <Pencil size={16} />
+        </button>
+        <button
+            onClick={() => onDelete(link.id)}
+            className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+            title="Usuń"
+        >
+            <Trash2 size={16} />
+        </button>
+      </div>
     </div>
   );
 }
