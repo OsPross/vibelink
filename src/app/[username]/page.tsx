@@ -34,25 +34,27 @@ async function getProfileData(username: string) {
 // --- 1. GENEROWANIE METADANYCH SEO ---
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
+  
+  // Próbujemy pobrać dane, ale jeśli się nie uda, używamy samej nazwy
   const data = await getProfileData(username);
-
-  if (!data) return { title: 'Profil nie znaleziony' };
-
-  const title = `@${data.profile.username} | VibeLink`;
-  const description = data.profile.bio || `Zobacz linki użytkownika ${data.profile.username}`;
+  const displayName = data?.profile?.username || username;
+  const bio = data?.profile?.bio || `Zobacz profil użytkownika ${displayName} na VibeLink.`;
 
   return {
-    title: title,
-    description: description,
+    title: `@${displayName}`, // Tytuł karty
+    description: bio,         // Opis karty (bio użytkownika)
+    
+    // WAŻNE: Usuwamy ręczne definiowanie 'images'. 
+    // Next.js SAM znajdzie plik opengraph-image.tsx w tym folderze i go podstawi.
     openGraph: {
-      title: title,
-      description: description,
-      images: [`/api/og?username=${username}`], // Możemy tu podpiąć dynamiczny generator obrazków
+      title: `@${displayName} | VibeLink`,
+      description: bio,
+      type: "profile",
     },
     twitter: {
       card: "summary_large_image",
-      title: title,
-      description: description,
+      title: `@${displayName} | VibeLink`,
+      description: bio,
     }
   };
 }

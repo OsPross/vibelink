@@ -30,24 +30,24 @@ const getBaseUrl = () => {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(getBaseUrl()), // <--- TO NAPRAWIA BŁĄD
+  // 👇 ZMIEŃ TEN ADRES NA SWÓJ (bez ukośnika na końcu)
+  metadataBase: new URL("https://vibelink-eight.vercel.app"), 
+  
   title: {
-    default: "VibeLink | Your Links. Your Vibe.",
-    template: "%s | VibeLink"
+    default: "VibeLink",
+    template: "%s | VibeLink" // To sprawi, że tytuł będzie: "@oskaros | VibeLink"
   },
-  description: "Futurystyczna platforma link-in-bio dla twórców. Stwórz swój profil w 30 sekund.",
-  icons: {
-    icon: "/favicon.ico", // Możesz tu dodać własną ikonę później
-  },
+  description: "Futurystyczna platforma link-in-bio dla twórców.",
   openGraph: {
     title: "VibeLink",
-    description: "Futurystyczna platforma link-in-bio.",
-    url: getBaseUrl(),
+    description: "Stwórz swój profil w 30 sekund.",
+    url: "https://vibelink-eight.vercel.app",
     siteName: "VibeLink",
     locale: "pl_PL",
     type: "website",
   },
 };
+
 
 export default function RootLayout({
   children,
